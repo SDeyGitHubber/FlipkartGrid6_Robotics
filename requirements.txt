@@ -1,0 +1,11 @@
+opencv-python==4.5.5.64
+numpy
+ultralytics
+pytesseract
+inference-sdk
+requests
+google-generativeai
+streamlit  
+Pillow
+python-dotenv 
+tensorflow 

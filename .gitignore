@@ -1,0 +1,8 @@
+*.pyc
+__pycache__/
+*.jpg
+*.jpeg
+*.png
+.env
+FullKart.v7i.yolov8/
+venv/

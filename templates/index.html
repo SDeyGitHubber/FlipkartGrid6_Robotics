@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Analysis and Object Detection</title>
+</head>
+<body>
+    <h1>Product Analysis and Object Detection</h1>
+
+    <!-- OCR Analysis -->
+    <h2>Complete OCR Analysis</h2>
+    <form action="/ocr_analysis" method="post" enctype="multipart/form-data">
+        <label for="file">Upload Product Image:</label>
+        <input type="file" name="file" id="file" required>
+        <label for="option">Select Option:</label>
+        <select name="option">
+            <option value="expiry">Get Expiry Date</option>
+            <option value="gemini_analysis">Scanned OCR Details</option>
+        </select>
+        <button type="submit">Submit</button>
+    </form>
+
+    <!-- Object Detection -->
+    <h2>Object Detection</h2>
+    <form action="/object_detection" method="post" enctype="multipart/form-data">
+        <label for="file

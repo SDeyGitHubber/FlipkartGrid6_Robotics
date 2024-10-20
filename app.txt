@@ -1,0 +1,90 @@
+import streamlit as st
+from datetime import datetime
+from PIL import Image
+import cv2
+import os
+from src.ocr_label_scanning.gemini_analysis import analyze_text_with_gemini
+from src.ocr_expiry.expiry_date_detection import detect_expiry_date
+from src.object_detection.detection import detect_and_count_objects
+from ultralytics import YOLO
+import shutil
+
+# Helper to save uploaded file
+def save_uploaded_file(uploaded_file, folder='static/'):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    file_path = os.path.join(folder, uploaded_file.name)
+    with open(file_path, 'wb') as f:
+        f.write(uploaded_file.getbuffer())
+    return file_path
+
+# Title and instructions
+st.title("Product OCR and Object Detection System")
+
+# --- Section 1: OCR Analysis ---
+st.header("Complete OCR Analysis")
+
+# Upload product image for OCR
+uploaded_image = st.file_uploader("Upload a product image", type=["png", "jpg", "jpeg"])
+
+if uploaded_image:
+    image_path = save_uploaded_file(uploaded_image)
+
+    # OCR options
+    option = st.radio("Choose OCR Option:", ('Get Expiry Date', 'Scanned OCR Details'))
+
+    if option == 'Get Expiry Date':
+        # Perform expiry date detection
+        detections = detect_expiry_date(image_path, "flipkartgrid-ocr-tmd6q-lbde9/1")
+        expiry_date_detected = False
+
+        for detection in detections:
+            expiry_date = detection.get('expiry_date')
+            if expiry_date:
+                expiry_date_detected = True
+                st.write(f"Detected Expiry Date: {expiry_date}")
+                current_date = datetime.now().strftime("%Y-%m-%d")
+                if expiry_date < current_date:
+                    st.error("The product has expired.")
+                else:
+                    st.success("The product has not expired.")
+        if not expiry_date_detected:
+            st.error("No expiry date detected.")
+
+    elif option == 'Scanned OCR Details':
+        # Perform Gemini Pro analysis on OCR text
+        extracted_text = "Sample OCR text from the product."  # Replace with actual extracted OCR text
+        analysis_result = analyze_text_with_gemini(extracted_text)
+        st.write("OCR Analysis Result:")
+        st.write(analysis_result)
+
+# --- Section 2: Object Detection ---
+st.header("Object Detection")
+
+# Upload image for object detection
+uploaded_detection_image = st.file_uploader("Upload an image with multiple objects", type=["png", "jpg", "jpeg"])
+
+if uploaded_detection_image:
+    detection_image_path = save_uploaded_file(uploaded_detection_image)
+
+    # Perform object detection using YOLOv8
+    st.write("Processing image for object detection...")
+    
+    # Load YOLOv8 model (change path to your model)
+    model_path = 'yolov8n.pt'
+    model = YOLO(model_path)
+
+    # Call detection function
+    detected_objects, object_counts = detect_and_count_objects(detection_image_path, model)
+
+    # Display number of objects and their descriptions
+    st.write("Detected Objects and Descriptions:")
+    for obj in detected_objects:
+        st.write(f"Bounding Box: {obj['bounding_box']}, Shape: {obj['shape']}, Color: {obj['color']}, "
+                 f"Label: {obj['label']}, Confidence: {obj['confidence']}")
+
+    # Display the original image with bounding boxes
+    output_image = cv2.imread(detection_image_path)
+    output_image_path = os.path.join('static', f"output_{uploaded_detection_image.name}")
+    cv2.imwrite(output_image_path, output_image)
+    st.image(output_image_path, caption="Detected Objects", use_column_width=True)
